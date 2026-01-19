@@ -204,13 +204,12 @@ function backToEnv(){
 }
 
 /* ===== GOOGLE SHEETS CONFIG ===== */
-const SHEETS_URL="https://script.google.com/macros/s/AKfycbzcVPg6Blji9GOWv9-0E4UT5JDghVl_CmYxxiqdX6SbP6lhxgAtuf3veByu3d-hDFsj/exec";
+const SHEETS_URL="https://script.google.com/macros/s/AKfycbyJNbnurDsYbQeomdqZ-kUa5iLcWOJ8MykBdub3SFlqGHuZ4M0wx8XTdSznaqipZ8KX/exec";
 
 async function sheetsLoad(){
   try{
     const r = await fetch(`${SHEETS_URL}?env=${env}`);
     const data = await r.json();
-    // Lohan vê todos, os outros só seus pedidos
     if(userAtual === "Lohan") pedidos = data;
     else pedidos = data.filter(p=>p.usuario === userAtual);
   }catch(e){console.error("Erro ao carregar dados do Sheets",e);}
@@ -231,7 +230,7 @@ async function login(){
   if(env==="Modelle") themeModelle();
   if(env==="Thalles") themeThalles();
 
-  await sheetsLoad(); // Carrega pedidos do Sheets
+  await sheetsLoad();
   render();
  }else loginError.innerText="Login inválido";
 }
@@ -250,7 +249,6 @@ async function addPedido(){
   pedidos.push(novo);
   render();
 
-  // envia para Sheets
   await fetch(SHEETS_URL,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
@@ -263,7 +261,6 @@ async function deletePedido(id){
     const p = pedidos.find(p=>p.id===id);
     pedidos = pedidos.filter(p=>p.id!==id);
     render();
-    // Reenvia toda lista para Sheets (pode ser ajustado para deletar individual se preferir)
     for(const ped of pedidos){
       await fetch(SHEETS_URL,{
         method:"POST",
@@ -283,7 +280,6 @@ async function editPedido(id){
     p.ordinario=+prompt("Operacionais:",p.ordinario) || p.ordinario;
   }
   render();
-  // envia alteração para Sheets
   await fetch(SHEETS_URL,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
