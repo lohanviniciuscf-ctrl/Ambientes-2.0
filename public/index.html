@@ -14,34 +14,115 @@
   --accent:#64ffda;
   --text:#e6f1ff;
 }
+
 *{box-sizing:border-box}
+
 body{
   margin:0;
   font-family:'Poppins',sans-serif;
   background:linear-gradient(135deg,var(--bg),#020c1b);
   color:var(--text);
+  transition:.4s;
 }
+
 button,input{
   padding:10px;
   border:none;
   border-radius:10px;
   font-family:'Poppins';
 }
-button{cursor:pointer;font-weight:600}
+
+button{
+  cursor:pointer;
+  font-weight:600;
+  transition:.3s;
+}
+button:hover{transform:scale(1.05)}
+
 .center{
   min-height:100vh;
   display:flex;
   align-items:center;
   justify-content:center;
 }
+
 .box{
   background:var(--card);
   padding:35px;
   border-radius:22px;
   width:380px;
   text-align:center;
+  box-shadow:0 25px 60px rgba(0,0,0,.45);
+  animation:fade .5s;
 }
+
+@keyframes fade{
+ from{opacity:0;transform:translateY(20px)}
+ to{opacity:1}
+}
+
 .hidden{display:none}
+
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:25px;
+}
+
+.metrics{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:20px;
+  margin-bottom:25px;
+}
+
+.metric{
+  background:var(--card);
+  padding:20px;
+  border-radius:20px;
+  text-align:center;
+  box-shadow:0 15px 35px rgba(0,0,0,.25);
+  transition:.3s;
+}
+.metric:hover{transform:translateY(-6px)}
+
+.metric strong{font-size:22px}
+
+.form{
+  background:var(--card);
+  padding:20px;
+  border-radius:20px;
+  margin-bottom:25px;
+}
+
+.lead{
+  background:#fff;
+  color:#000;
+  padding:18px;
+  border-radius:18px;
+  margin-bottom:15px;
+  box-shadow:0 10px 30px rgba(0,0,0,.2);
+  transition:.3s;
+}
+.lead:hover{transform:translateY(-5px)}
+
+.lead small{opacity:.6}
+
+.lead button{
+  margin-top:10px;
+  margin-right:5px;
+  font-size:12px;
+  padding:6px 12px;
+  border-radius:8px;
+}
+
+.btn-edit{
+  background:#fde68a;
+}
+.btn-delete{
+  background:#fecaca;
+}
 </style>
 </head>
 
@@ -50,9 +131,9 @@ button{cursor:pointer;font-weight:600}
 <div id="envSelect" class="center">
   <div class="box">
     <h2>🌐 Escolha o ambiente</h2><br>
-    <button onclick="selectEnv('Modelle')">👩‍🦰 Modelle Skin</button><br><br>
-    <button onclick="selectEnv('Cia')">📒 Cia & Arte</button><br><br>
-    <button onclick="selectEnv('Thalles')">🌬️ Thalles Climatização</button>
+    <button style="background:#e7c09b" onclick="selectEnv('Modelle')">👩‍🦰 Modelle Skin</button><br><br>
+    <button style="background:#64ffda" onclick="selectEnv('Cia')">📒 Cia & Arte</button><br><br>
+    <button style="background:#7dd3fc" onclick="selectEnv('Thalles')">🌬️ Thalles Climatização</button>
   </div>
 </div>
 
@@ -68,55 +149,206 @@ button{cursor:pointer;font-weight:600}
 </div>
 
 <div id="app" class="hidden" style="padding:30px">
+<header>
   <h2 id="appTitle"></h2>
-  <button onclick="logout()">Sair</button>
+  <div>
+    <button onclick="exportCSV()">⬇ CSV</button>
+    <button onclick="logout()">Sair</button>
+  </div>
+</header>
+
+<div id="metrics" class="metrics"></div>
+<div class="form" id="formArea"></div>
+<div id="lista"></div>
 </div>
 
 <script>
-/* ===== DADOS ===== */
+/* ===== USUÁRIOS ===== */
 const users={
-  Lohan:{pass:"D9f0da85",env:["Modelle","Cia","Thalles"]},
-  Marcus:{pass:"Elistray6001",env:["Cia"]},
-  Queila:{pass:"alieuq79",env:["Modelle"]},
-  Hamonny:{pass:"climatização",env:["Thalles"]}
+ Lohan:{pass:"D9f0da85",env:["Modelle","Cia","Thalles"]},
+ Marcus:{pass:"Elistray6001",env:["Cia"]},
+ Queila:{pass:"alieuq79",env:["Modelle"]},
+ Hamonny:{pass:"climatização",env:["Thalles"]}
 };
 
-let env=null;
-let userAtual=null;
+let env=null,userAtual=null,pedidos=[];
 
-/* ===== CONTROLE DE AMBIENTE ===== */
-function selectEnv(e){
-  env=e;
-  document.getElementById("envSelect").classList.add("hidden");
-  document.getElementById("loginScreen").classList.remove("hidden");
-  document.getElementById("envTitle").innerText=e;
+/* ===== TEMAS ===== */
+function themeModelle(){
+ document.documentElement.style.setProperty("--bg","#f6e2cf");
+ document.documentElement.style.setProperty("--card","#e7c09b");
+ document.documentElement.style.setProperty("--accent","#c58c5e");
+ document.documentElement.style.setProperty("--text","#000");
+}
+function themeThalles(){
+ document.documentElement.style.setProperty("--bg","#0b1220");
+ document.documentElement.style.setProperty("--card","#0f172a");
+ document.documentElement.style.setProperty("--accent","#38bdf8");
+ document.documentElement.style.setProperty("--text","#e0f2fe");
 }
 
+/* ===== SELEÇÃO DE AMBIENTE ===== */
+function selectEnv(e){
+ env=e;
+ envSelect.classList.add("hidden");
+ loginScreen.classList.remove("hidden");
+
+ envTitle.innerText =
+  e==="Modelle" ? "👩‍🦰 Modelle Skin" :
+  e==="Cia" ? "📒 Cia & Arte" :
+  "🌬️ Thalles Climatização";
+}
 function backToEnv(){
-  env=null;
-  document.getElementById("loginScreen").classList.add("hidden");
-  document.getElementById("envSelect").classList.remove("hidden");
+ loginScreen.classList.add("hidden");
+ envSelect.classList.remove("hidden");
+}
+
+/* ===== GOOGLE SHEETS CONFIG ===== */
+const SHEETS_URL="https://script.google.com/macros/s/AKfycbzcVPg6Blji9GOWv9-0E4UT5JDghVl_CmYxxiqdX6SbP6lhxgAtuf3veByu3d-hDFsj/exec";
+
+async function sheetsSave(){
+ await fetch(SHEETS_URL,{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({env,user:userAtual,pedidos})
+ });
+}
+
+async function sheetsLoad(){
+ try{
+   const r = await fetch(`${SHEETS_URL}?env=${env}`);
+   const data = await r.json();
+   pedidos = data || [];
+ }catch(e){console.error("Erro ao carregar dados do Sheets",e);}
 }
 
 /* ===== LOGIN ===== */
-function login(){
-  const u=user.value;
-  const p=pass.value;
-
-  if(!users[u] || users[u].pass!==p || !users[u].env.includes(env)){
-    loginError.innerText="Login inválido";
-    return;
-  }
-
-  userAtual=u;
+async function login(){
+ if(users[user.value] && users[user.value].pass===pass.value && users[user.value].env.includes(env)){
+  userAtual=user.value;
   loginScreen.classList.add("hidden");
   app.classList.remove("hidden");
-  appTitle.innerText=env+" — "+userAtual;
+
+  appTitle.innerText =
+   env==="Modelle" ? "👩‍🦰 Modelle Skin — "+userAtual :
+   env==="Cia" ? "📒 Cia & Arte — "+userAtual :
+   "🌬️ Thalles Climatização — "+userAtual;
+
+  if(env==="Modelle") themeModelle();
+  if(env==="Thalles") themeThalles();
+
+  await sheetsLoad(); // Carrega pedidos do Sheets
+  render();
+ }else loginError.innerText="Login inválido";
 }
 
-/* ===== LOGOUT ===== */
-function logout(){
-  location.reload();
+function logout(){location.reload()}
+
+/* ===== PEDIDOS ===== */
+function addPedido(){
+ if(env==="Modelle"){
+  pedidos.push({id:Date.now(),desc:desc.value,valor:+valor.value,data:Date.now()});
+ }else{
+  pedidos.push({
+   id:Date.now(),
+   desc:desc.value,
+   valor:+valor.value,
+   custo:+custo.value,
+   ordinario:+ordinario.value,
+   data:Date.now()
+  });
+ }
+ render();
+ sheetsSave();
+}
+
+function deletePedido(id){
+ if(confirm("Deseja excluir este pedido?")){
+  pedidos=pedidos.filter(p=>p.id!==id);
+  render();
+  sheetsSave();
+ }
+}
+
+function editPedido(id){
+ const p=pedidos.find(p=>p.id===id);
+ p.desc=prompt("Descrição:",p.desc) || p.desc;
+ p.valor=+prompt("Valor:",p.valor) || p.valor;
+ if(env!=="Modelle"){
+  p.custo=+prompt("Custo:",p.custo) || p.custo;
+  p.ordinario=+prompt("Ordinários:",p.ordinario) || p.ordinario;
+ }
+ render();
+ sheetsSave();
+}
+
+/* ===== RENDER ===== */
+function render(){
+ let total=0,custos=0;
+ pedidos.forEach(p=>{
+  total+=p.valor;
+  if(env!=="Modelle") custos+=(p.custo+p.ordinario);
+ });
+
+ let lucro=total-custos;
+ let comissao=total*0.01;
+
+ metrics.innerHTML=env==="Modelle"?`
+  <div class="metric">Pedidos<br><strong>${pedidos.length}</strong></div>
+  <div class="metric">Total<br><strong>R$ ${total.toFixed(2)}</strong></div>
+  <div class="metric">Comissão 1%<br><strong>R$ ${comissao.toFixed(2)}</strong></div>
+ `:` 
+  <div class="metric">Pedidos<br><strong>${pedidos.length}</strong></div>
+  <div class="metric">Faturamento<br><strong>R$ ${total.toFixed(2)}</strong></div>
+  <div class="metric">Custos<br><strong>R$ ${custos.toFixed(2)}</strong></div>
+  <div class="metric">Lucro<br><strong>R$ ${lucro.toFixed(2)}</strong></div>
+ `;
+
+ formArea.innerHTML=env==="Modelle"?`
+  <input id="desc" placeholder="O que é o pedido"><br><br>
+  <input id="valor" type="number" placeholder="Valor do pedido"><br><br>
+  <button onclick="addPedido()">Adicionar</button>
+ `:`
+  <input id="desc" placeholder="Descrição do serviço"><br><br>
+  <input id="valor" type="number" placeholder="Valor cobrado"><br><br>
+  <input id="custo" type="number" placeholder="Custo do material"><br><br>
+  <input id="ordinario" type="number" placeholder="Custos operacionais"><br><br>
+  <button onclick="addPedido()">Adicionar</button>
+ `;
+
+ lista.innerHTML="";
+ pedidos.forEach(p=>{
+  lista.innerHTML+=`
+   <div class="lead">
+    <strong>${p.desc}</strong><br>
+    💰 Valor: R$ ${p.valor}<br>
+    ${env!=="Modelle"?`📉 Custos: R$ ${(p.custo+p.ordinario)}<br>📈 Lucro: R$ ${(p.valor-(p.custo+p.ordinario))}<br>`:""}
+    <small>📅 ${new Date(p.data).toLocaleDateString()}</small><br>
+    <button class="btn-edit" onclick="editPedido(${p.id})">✏️ Editar</button>
+    <button class="btn-delete" onclick="deletePedido(${p.id})">🗑️ Excluir</button>
+   </div>
+  `;
+ });
+}
+
+/* ===== EXPORT CSV ===== */
+function exportCSV(){
+ let csv="Descrição,Valor,Data\n";
+ if(env!=="Modelle") csv="Descrição,Valor,Custo,Ordinários,Lucro,Data\n";
+
+ pedidos.forEach(p=>{
+  if(env==="Modelle"){
+   csv+=`${p.desc},${p.valor},${new Date(p.data).toLocaleDateString()}\n`;
+  }else{
+   csv+=`${p.desc},${p.valor},${p.custo},${p.ordinario},${p.valor-(p.custo+p.ordinario)},${new Date(p.data).toLocaleDateString()}\n`;
+  }
+ });
+
+ const blob=new Blob([csv],{type:"text/csv"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download=env+"_consolidado.csv";
+ a.click();
 }
 </script>
 
