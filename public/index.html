@@ -132,9 +132,9 @@ header{
 <div id="envSelect" class="center">
   <div class="box">
     <h2>🌐 Escolha o ambiente</h2><br>
-    <button style="background:#e7c09b" onclick="selectEnv('Modelle')">👩‍🦰 Modelle Skin</button><br><br>
-    <button style="background:#64ffda" onclick="selectEnv('Cia')">📒 Cia & Arte</button><br><br>
-    <button style="background:#7dd3fc" onclick="selectEnv('Thalles')">🌬️ Thalles Climatização</button>
+    <button style="background:#e7c09b" data-env="Modelle">👩‍🦰 Modelle Skin</button><br><br>
+    <button style="background:#64ffda" data-env="Cia">📒 Cia & Arte</button><br><br>
+    <button style="background:#7dd3fc" data-env="Thalles">🌬️ Thalles Climatização</button>
   </div>
 </div>
 
@@ -156,7 +156,6 @@ header{
   <h2 id="appTitle"></h2>
   <div>
     <button onclick="exportCSV()">⬇ CSV</button>
-    <button onclick="enviarAppSheet()" style="background:#64ffda;color:#000;">💾 Salvar no AppSheet</button>
     <button onclick="logout()">Sair</button>
   </div>
 </header>
@@ -192,6 +191,13 @@ function themeThalles(){
 }
 
 /* ===== SELEÇÃO DE AMBIENTE ===== */
+const envButtons = document.querySelectorAll("#envSelect button[data-env]");
+envButtons.forEach(btn => {
+  btn.addEventListener("click", ()=> {
+    selectEnv(btn.dataset.env);
+  });
+});
+
 function selectEnv(e){
  env=e;
  envSelect.classList.add("hidden");
@@ -249,6 +255,7 @@ function deletePedido(id){
  if(confirm("Deseja excluir este pedido?")){
   pedidos=pedidos.filter(p=>p.id!==id);
   render();
+ }
 }
 
 function editPedido(id){
@@ -329,48 +336,6 @@ function exportCSV(){
  a.href=URL.createObjectURL(blob);
  a.download=env+"_consolidado.csv";
  a.click();
-}
-
-/* ===== ENVIO PARA APPSHEET ===== */
-async function enviarAppSheet(){
- if(!userAtual || !env) return alert("Faça login e selecione um ambiente.");
-
- const APPSHEET_URL = "https://api.appsheet.com/api/v2/apps/SEU_APP_ID/tables/SUA_TABELA/Action"; // substituir
- const API_KEY = "SUA_API_KEY"; // substituir
-
- for(const p of pedidos){
-  const payload = {
-    Action: "Add",
-    Properties: {},
-    Rows: [
-      {
-        Usuario: userAtual,
-        Ambiente: env,
-        Descricao: p.desc,
-        Valor: p.valor,
-        Custo: p.custo || 0,
-        Ordinario: p.ordinario || 0,
-        Data: new Date(p.data).toISOString()
-      }
-    ]
-  };
-
-  try{
-    const res = await fetch(APPSHEET_URL,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "ApplicationAccessKey": API_KEY
-      },
-      body: JSON.stringify(payload)
-    });
-    if(!res.ok) console.error("Erro ao enviar pedido:", p, await res.text());
-  }catch(e){
-    console.error("Erro de conexão com AppSheet:", e);
-  }
- }
-
- alert("Pedidos enviados para o AppSheet!");
 }
 </script>
 
