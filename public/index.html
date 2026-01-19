@@ -37,7 +37,6 @@ button{
   font-weight:600;
   transition:.3s;
 }
-
 button:hover{transform:scale(1.05)}
 
 .center{
@@ -125,8 +124,9 @@ header{
 <div id="envSelect" class="center">
   <div class="box">
     <h2>🌐 Escolha o ambiente</h2><br>
-    <button style="background:#e7c09b" onclick="selectEnv('Modelle')">🧴 Modelle Skin</button><br><br>
-    <button style="background:#64ffda" onclick="selectEnv('Cia')">🎨 Cia & Arte</button>
+    <button style="background:#e7c09b" onclick="selectEnv('Modelle')">👩‍🦰 Modelle Skin</button><br><br>
+    <button style="background:#64ffda" onclick="selectEnv('Cia')">📒 Cia & Arte</button><br><br>
+    <button style="background:#7dd3fc" onclick="selectEnv('Thalles')">🌬️ Thalles Climatização</button>
   </div>
 </div>
 
@@ -153,16 +153,14 @@ header{
 </header>
 
 <div id="metrics" class="metrics"></div>
-
 <div class="form" id="formArea"></div>
-
 <div id="lista"></div>
 </div>
 
 <script>
 const users={
- Lohan:{pass:"D9f0da85",env:["Modelle","Cia"]},
- marcus:{pass:"Elistray6001",env:["Cia"]},
+ Lohan:{pass:"D9f0da85",env:["Modelle","Cia","Thalles"]},
+ marcus:{pass:"Elistray6001",env:["Cia","Thalles"]},
  Queila:{pass:"alieuq79",env:["Modelle"]}
 };
 
@@ -175,11 +173,22 @@ function themeModelle(){
  document.documentElement.style.setProperty("--text","#000");
 }
 
+function themeThalles(){
+ document.documentElement.style.setProperty("--bg","#0b1220");
+ document.documentElement.style.setProperty("--card","#0f172a");
+ document.documentElement.style.setProperty("--accent","#38bdf8");
+ document.documentElement.style.setProperty("--text","#e0f2fe");
+}
+
 function selectEnv(e){
  env=e;
  envSelect.classList.add("hidden");
  loginScreen.classList.remove("hidden");
- envTitle.innerText=e==="Modelle"?"🧴 Modelle Skin":"🎨 Cia & Arte";
+
+ envTitle.innerText =
+  e==="Modelle" ? "👩‍🦰 Modelle Skin" :
+  e==="Cia" ? "📒 Cia & Arte" :
+  "🌬️ Thalles Climatização";
 }
 
 function backToEnv(){
@@ -192,8 +201,15 @@ function login(){
   userAtual=user.value;
   loginScreen.classList.add("hidden");
   app.classList.remove("hidden");
-  appTitle.innerText=(env==="Modelle"?"🧴 Modelle Skin":"🎨 Cia & Arte")+" — "+userAtual;
+
+  appTitle.innerText =
+   env==="Modelle" ? "👩‍🦰 Modelle Skin — "+userAtual :
+   env==="Cia" ? "📒 Cia & Arte — "+userAtual :
+   "🌬️ Thalles Climatização — "+userAtual;
+
   if(env==="Modelle") themeModelle();
+  if(env==="Thalles") themeThalles();
+
   pedidos=JSON.parse(localStorage.getItem(env+"_"+userAtual))||[];
   render();
  }else loginError.innerText="Login inválido";
@@ -207,12 +223,7 @@ function save(){
 
 function addPedido(){
  if(env==="Modelle"){
-  pedidos.push({
-   id:Date.now(),
-   desc:desc.value,
-   valor:+valor.value,
-   data:Date.now()
-  });
+  pedidos.push({id:Date.now(),desc:desc.value,valor:+valor.value,data:Date.now()});
  }else{
   pedidos.push({
    id:Date.now(),
@@ -230,7 +241,7 @@ function render(){
  let total=0,custos=0;
  pedidos.forEach(p=>{
   total+=p.valor;
-  if(env==="Cia") custos+=(p.custo+p.ordinario);
+  if(env!=="Modelle") custos+=(p.custo+p.ordinario);
  });
 
  let lucro=total-custos;
@@ -252,10 +263,10 @@ function render(){
   <input id="valor" type="number" placeholder="Valor do pedido"><br><br>
   <button onclick="addPedido()">Adicionar</button>
  `:`
-  <input id="desc" placeholder="Descrição"><br><br>
-  <input id="valor" type="number" placeholder="Valor do produto"><br><br>
-  <input id="custo" type="number" placeholder="Custo do produto"><br><br>
-  <input id="ordinario" type="number" placeholder="Custos ordinários"><br><br>
+  <input id="desc" placeholder="Descrição do serviço"><br><br>
+  <input id="valor" type="number" placeholder="Valor cobrado"><br><br>
+  <input id="custo" type="number" placeholder="Custo do material"><br><br>
+  <input id="ordinario" type="number" placeholder="Custos operacionais"><br><br>
   <button onclick="addPedido()">Adicionar</button>
  `;
 
@@ -265,7 +276,7 @@ function render(){
    <div class="lead">
     <strong>${p.desc}</strong><br>
     💰 Valor: R$ ${p.valor}<br>
-    ${env==="Cia"?`📉 Custos: R$ ${(p.custo+p.ordinario)}<br>📈 Lucro: R$ ${(p.valor-(p.custo+p.ordinario))}<br>`:""}
+    ${env!=="Modelle"?`📉 Custos: R$ ${(p.custo+p.ordinario)}<br>📈 Lucro: R$ ${(p.valor-(p.custo+p.ordinario))}<br>`:""}
     <small>📅 ${new Date(p.data).toLocaleDateString()}</small>
    </div>
   `;
@@ -274,7 +285,8 @@ function render(){
 
 function exportCSV(){
  let csv="Descrição,Valor,Data\n";
- if(env==="Cia") csv="Descrição,Valor,Custo,Ordinários,Lucro,Data\n";
+ if(env!=="Modelle") csv="Descrição,Valor,Custo,Ordinários,Lucro,Data\n";
+
  pedidos.forEach(p=>{
   if(env==="Modelle"){
    csv+=`${p.desc},${p.valor},${new Date(p.data).toLocaleDateString()}\n`;
@@ -282,6 +294,7 @@ function exportCSV(){
    csv+=`${p.desc},${p.valor},${p.custo},${p.ordinario},${p.valor-(p.custo+p.ordinario)},${new Date(p.data).toLocaleDateString()}\n`;
   }
  });
+
  const blob=new Blob([csv],{type:"text/csv"});
  const a=document.createElement("a");
  a.href=URL.createObjectURL(blob);
