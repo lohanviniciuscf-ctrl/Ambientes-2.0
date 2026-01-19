@@ -171,19 +171,6 @@ function themeThalles(){
 }
 
 /* ===== LOGIN ===== */
-function selectEnv(e){
- env=e;
- envSelect.classList.add("hidden");
- loginScreen.classList.remove("hidden");
- envTitle.innerText =
-  e==="Modelle" ? "👩‍🦰 Modelle Skin" :
-  e==="Cia" ? "📒 Cia & Arte" :
-  "🌬️ Thalles Climatização";
-}
-function backToEnv(){
- loginScreen.classList.add("hidden");
- envSelect.classList.remove("hidden");
-}
 async function login(){
  if(users[user.value] && users[user.value].pass===pass.value && users[user.value].env.includes(env)){
   userAtual=user.value;
@@ -198,11 +185,18 @@ async function login(){
   if(env==="Modelle") themeModelle();
   if(env==="Thalles") themeThalles();
 
-  await loadPedidos();
+  try{
+    await loadPedidos();
+  }catch(e){
+    console.warn("Sheets não respondeu ainda", e);
+    pedidos=[];
+  }
+
   render();
- }else loginError.innerText="Login inválido";
+ }else{
+  loginError.innerText="Login inválido";
+ }
 }
-function logout(){location.reload()}
 
 /* ===== GOOGLE SHEETS ===== */
 async function loadPedidos(){
