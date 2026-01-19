@@ -2,205 +2,216 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CRM Premium</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
 <style>
+/* === ESTILO ORIGINAL PRESERVADO === */
 :root{
- --bg:#0a192f;
- --card:#112240;
- --accent:#64ffda;
- --text:#e6f1ff;
+  --bg:#0a192f;
+  --card:#112240;
+  --accent:#64ffda;
+  --text:#e6f1ff;
 }
-
 *{box-sizing:border-box}
-
 body{
- margin:0;
- font-family:'Poppins',sans-serif;
- background:linear-gradient(135deg,var(--bg),#020c1b);
- color:var(--text);
+  margin:0;
+  font-family:'Poppins',sans-serif;
+  background:linear-gradient(135deg,var(--bg),#020c1b);
+  color:var(--text);
+  transition:.4s;
 }
-
-button,input,select{
- padding:10px;
- border:none;
- border-radius:10px;
- font-family:'Poppins';
- width:100%;
- margin-bottom:10px;
+button,input{
+  padding:10px;
+  border:none;
+  border-radius:10px;
+  font-family:'Poppins';
 }
-
 button{
- cursor:pointer;
- font-weight:600;
- background:var(--accent);
- color:#000;
- transition:.3s;
+  cursor:pointer;
+  font-weight:600;
+  transition:.3s;
 }
 button:hover{transform:scale(1.05)}
-
 .center{
- min-height:100vh;
- display:flex;
- align-items:center;
- justify-content:center;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
-
 .box{
- background:var(--card);
- padding:30px;
- border-radius:22px;
- width:380px;
- box-shadow:0 25px 60px rgba(0,0,0,.45);
+  background:var(--card);
+  padding:35px;
+  border-radius:22px;
+  width:380px;
+  text-align:center;
+  box-shadow:0 25px 60px rgba(0,0,0,.45);
 }
-
 .hidden{display:none}
-
-header{
- display:flex;
- justify-content:space-between;
- align-items:center;
- margin-bottom:20px;
+.metrics{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:20px;
+  margin-bottom:25px;
 }
-
-.card{
- background:var(--card);
- padding:20px;
- border-radius:20px;
- margin-bottom:20px;
- box-shadow:0 15px 35px rgba(0,0,0,.25);
- transition:.3s;
+.metric{
+  background:var(--card);
+  padding:20px;
+  border-radius:20px;
+  text-align:center;
 }
-.card:hover{transform:translateY(-6px)}
-
+.form{
+  background:var(--card);
+  padding:20px;
+  border-radius:20px;
+  margin-bottom:25px;
+}
 .lead{
- background:#fff;
- color:#000;
- padding:15px;
- border-radius:15px;
- margin-bottom:10px;
+  background:#fff;
+  color:#000;
+  padding:18px;
+  border-radius:18px;
+  margin-bottom:15px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="login" class="center">
- <div class="box">
-  <h2>Login</h2>
-  <input id="user" placeholder="Usuário">
-  <input id="pass" type="password" placeholder="Senha">
-  <button onclick="login()">Entrar</button>
- </div>
-</div>
-
-<!-- AMBIENTES -->
-<div id="envs" class="center hidden">
- <div class="box">
-  <h2>Ambientes</h2>
-  <button onclick="openEnv('Modelle')">💃 Modelle Skin</button>
-  <button onclick="openEnv('Cia')">📓 Cia & Arte</button>
-  <button onclick="openEnv('Thalles')">💨 Thalles Climatização</button>
- </div>
-</div>
-
-<!-- DASHBOARD -->
-<div id="dash" class="hidden" style="padding:20px">
- <header>
-  <h2 id="envTitle"></h2>
-  <button onclick="back()">Voltar</button>
- </header>
-
- <div class="card">
-  <h3>Novo Pedido</h3>
-  <input id="desc" placeholder="Descrição">
-  <input id="valor" type="number" placeholder="Valor do produto">
-
-  <div id="custos">
-   <input id="custo" type="number" placeholder="Custo do produto">
-   <input id="ordinario" type="number" placeholder="Custos ordinários">
+<div id="envSelect" class="center">
+  <div class="box">
+    <h2>🌐 Escolha o ambiente</h2><br>
+    <button style="background:#e7c09b" onclick="selectEnv('Modelle')">👩‍🦰 Modelle Skin</button><br><br>
+    <button style="background:#64ffda" onclick="selectEnv('Cia')">📒 Cia & Arte</button><br><br>
+    <button style="background:#7dd3fc" onclick="selectEnv('Thalles')">🌬️ Thalles Climatização</button>
   </div>
+</div>
 
-  <button onclick="addPedido()">Adicionar Pedido</button>
- </div>
+<div id="loginScreen" class="center hidden">
+  <div class="box">
+    <button onclick="backToEnv()">⬅ Voltar</button>
+    <h2 id="envTitle"></h2><br>
+    <input id="user" placeholder="Usuário"><br><br>
+    <input id="pass" type="password" placeholder="Senha"><br><br>
+    <button onclick="login()">Entrar</button>
+    <div id="loginError"></div>
+  </div>
+</div>
 
- <div class="card">
-  <button onclick="downloadCSV()">⬇️ Baixar CSV</button>
- </div>
+<div id="app" class="hidden" style="padding:30px">
+<header>
+  <h2 id="appTitle"></h2>
+  <div>
+    <button onclick="exportCSV()">⬇ CSV</button>
+    <button onclick="logout()">Sair</button>
+  </div>
+</header>
 
- <div id="lista"></div>
+<div id="metrics" class="metrics"></div>
+<div class="form" id="formArea"></div>
+<div id="lista"></div>
 </div>
 
 <script>
-const API_URL="https://script.google.com/macros/s/AKfycby0k9Gi5PzBlGc3eeNcilGVYOiZUcKDX7OqhSFNOHfeQKJZ0D_qozWelrk5Xne9Spc3/exec";
+/* === CONFIG === */
+const API_URL = "https://script.google.com/macros/s/AKfycby0k9Gi5PzBlGc3eeNcilGVYOiZUcKDX7OqhSFNOHfeQKJZ0D_qozWelrk5Xne9Spc3/exec";
 
-let env="", userAtual="";
+const users={
+ Lohan:{pass:"D9f0da85",env:["Modelle","Cia","Thalles"]},
+ Marcus:{pass:"Elistray6001",env:["Cia"]},
+ Queila:{pass:"alieuq79",env:["Modelle"]},
+ Hamonny:{pass:"climatização",env:["Thalles"]}
+};
+
+let env=null,userAtual=null,pedidos=[];
+
+/* === LOGIN === */
+function selectEnv(e){
+ env=e;
+ envSelect.classList.add("hidden");
+ loginScreen.classList.remove("hidden");
+ envTitle.innerText=e;
+}
+
+function backToEnv(){
+ loginScreen.classList.add("hidden");
+ envSelect.classList.remove("hidden");
+}
 
 function login(){
- userAtual=user.value;
- loginDiv.classList.add("hidden");
- envs.classList.remove("hidden");
+ if(users[user.value] && users[user.value].pass===pass.value && users[user.value].env.includes(env)){
+  userAtual=user.value;
+  loginScreen.classList.add("hidden");
+  app.classList.remove("hidden");
+  appTitle.innerText=env+" — "+userAtual;
+  loadPedidos();
+ }else loginError.innerText="Login inválido";
 }
 
-function openEnv(e){
- env=e;
- envs.classList.add("hidden");
- dash.classList.remove("hidden");
- envTitle.innerText=e;
+function logout(){location.reload()}
 
- custos.style.display=(env==="Modelle")?"none":"block";
- loadPedidos();
+/* === GOOGLE SHEETS === */
+async function loadPedidos(){
+ const r = await fetch(API_URL+"?env="+env);
+ const data = await r.json();
+ pedidos = data.slice(1).map((l,i)=>({
+  row:i+2,
+  usuario:l[1],
+  desc:l[2],
+  valor:+l[3],
+  custo:+l[4]||0,
+  ordinario:+l[5]||0,
+  data:l[l.length-1]
+ }));
+ render();
 }
 
-function back(){
- dash.classList.add("hidden");
- envs.classList.remove("hidden");
-}
-
-async function addPedido(){
- let payload={
-  env,
-  usuario:userAtual,
-  desc:desc.value,
-  valor:+valor.value,
-  custo:+custo.value||0,
-  ordinario:+ordinario.value||0
- };
-
+async function savePedido(row){
  await fetch(API_URL,{
   method:"POST",
-  headers:{"Content-Type":"application/json"},
-  body:JSON.stringify(payload)
+  body:JSON.stringify({env,row})
  });
-
- desc.value=valor.value=custo.value=ordinario.value="";
  loadPedidos();
 }
 
-async function loadPedidos(){
- lista.innerHTML="";
- const r=await fetch(`${API_URL}?env=${env}&user=${userAtual}`);
- const data=await r.json();
+/* === CRUD === */
+function addPedido(){
+ let row;
+ if(env==="Modelle"){
+  row=[env,userAtual,desc.value,+valor.value,new Date().toLocaleDateString()];
+ }else{
+  let lucro=valor.value-(custo.value+ordinario.value);
+  row=[env,userAtual,desc.value,+valor.value,+custo.value,+ordinario.value, lucro,new Date().toLocaleDateString()];
+ }
+ savePedido(row);
+}
 
- data.forEach(p=>{
+/* === UI === */
+function render(){
+ lista.innerHTML="";
+ pedidos.forEach(p=>{
   lista.innerHTML+=`
    <div class="lead">
-    <b>${p.desc}</b><br>
-    Valor: R$ ${p.valor}<br>
-    ${env!=="Modelle"?
-     `Custo: R$ ${p.custo}<br>
-      Ordinários: R$ ${p.ordinario}<br>
-      <b>Lucro: R$ ${p.lucro}</b>`:""}
-   </div>`;
+    <strong>${p.desc}</strong><br>
+    💰 R$ ${p.valor}<br>
+    <small>👤 ${p.usuario} • 📅 ${p.data}</small>
+   </div>
+  `;
  });
 }
 
-async function downloadCSV(){
- window.open(`${API_URL}?csv=1&env=${env}`);
+function exportCSV(){
+ let csv="Usuário,Descrição,Valor,Data\n";
+ pedidos.forEach(p=>{
+  csv+=`${p.usuario},${p.desc},${p.valor},${p.data}\n`;
+ });
+ const blob=new Blob([csv],{type:"text/csv"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download=env+"_consolidado.csv";
+ a.click();
 }
 </script>
 
