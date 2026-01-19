@@ -114,13 +114,20 @@ header{
   margin-right:5px;
   font-size:12px;
   padding:6px 12px;
+  border-radius:8px;
+}
+
+.btn-edit{
+  background:#fde68a;
+}
+.btn-delete{
+  background:#fecaca;
 }
 </style>
 </head>
 
 <body>
 
-<!-- AMBIENTES -->
 <div id="envSelect" class="center">
   <div class="box">
     <h2>🌐 Escolha o ambiente</h2><br>
@@ -130,7 +137,6 @@ header{
   </div>
 </div>
 
-<!-- LOGIN -->
 <div id="loginScreen" class="center hidden">
   <div class="box">
     <button onclick="backToEnv()">⬅ Voltar</button>
@@ -142,7 +148,6 @@ header{
   </div>
 </div>
 
-<!-- APP -->
 <div id="app" class="hidden" style="padding:30px">
 <header>
   <h2 id="appTitle"></h2>
@@ -238,6 +243,24 @@ function addPedido(){
  save();render();
 }
 
+function deletePedido(id){
+ if(confirm("Deseja excluir este pedido?")){
+  pedidos=pedidos.filter(p=>p.id!==id);
+  save();render();
+ }
+}
+
+function editPedido(id){
+ const p=pedidos.find(p=>p.id===id);
+ p.desc=prompt("Descrição:",p.desc) || p.desc;
+ p.valor=+prompt("Valor:",p.valor) || p.valor;
+ if(env!=="Modelle"){
+  p.custo=+prompt("Custo:",p.custo) || p.custo;
+  p.ordinario=+prompt("Ordinários:",p.ordinario) || p.ordinario;
+ }
+ save();render();
+}
+
 function render(){
  let total=0,custos=0;
  pedidos.forEach(p=>{
@@ -278,7 +301,9 @@ function render(){
     <strong>${p.desc}</strong><br>
     💰 Valor: R$ ${p.valor}<br>
     ${env!=="Modelle"?`📉 Custos: R$ ${(p.custo+p.ordinario)}<br>📈 Lucro: R$ ${(p.valor-(p.custo+p.ordinario))}<br>`:""}
-    <small>📅 ${new Date(p.data).toLocaleDateString()}</small>
+    <small>📅 ${new Date(p.data).toLocaleDateString()}</small><br>
+    <button class="btn-edit" onclick="editPedido(${p.id})">✏️ Editar</button>
+    <button class="btn-delete" onclick="deletePedido(${p.id})">🗑️ Excluir</button>
    </div>
   `;
  });
