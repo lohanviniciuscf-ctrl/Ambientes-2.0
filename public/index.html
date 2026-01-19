@@ -206,20 +206,14 @@ function backToEnv(){
 /* ===== GOOGLE SHEETS CONFIG ===== */
 const SHEETS_URL="https://script.google.com/macros/s/AKfycbzcVPg6Blji9GOWv9-0E4UT5JDghVl_CmYxxiqdX6SbP6lhxgAtuf3veByu3d-hDFsj/exec";
 
-async function sheetsSave(){
- await fetch(SHEETS_URL,{
-  method:"POST",
-  headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({env,user:userAtual,pedidos})
- });
-}
-
 async function sheetsLoad(){
- try{
-   const r = await fetch(`${SHEETS_URL}?env=${env}`);
-   const data = await r.json();
-   pedidos = data || [];
- }catch(e){console.error("Erro ao carregar dados do Sheets",e);}
+  try{
+    const r = await fetch(`${SHEETS_URL}?env=${env}`);
+    const data = await r.json();
+    // Lohan vê todos, os outros só seus pedidos
+    if(userAtual === "Lohan") pedidos = data;
+    else pedidos = data.filter(p=>p.usuario === userAtual);
+  }catch(e){console.error("Erro ao carregar dados do Sheets",e);}
 }
 
 /* ===== LOGIN ===== */
@@ -245,41 +239,56 @@ async function login(){
 function logout(){location.reload()}
 
 /* ===== PEDIDOS ===== */
-function addPedido(){
- if(env==="Modelle"){
-  pedidos.push({id:Date.now(),desc:desc.value,valor:+valor.value,data:Date.now()});
- }else{
-  pedidos.push({
-   id:Date.now(),
-   desc:desc.value,
-   valor:+valor.value,
-   custo:+custo.value,
-   ordinario:+ordinario.value,
-   data:Date.now()
-  });
- }
- render();
- sheetsSave();
-}
+async function addPedido(){
+  let novo;
+  if(env==="Modelle"){
+    novo = {usuario:userAtual, id:Date.now(), desc:desc.value, valor:+valor.value, data:Date.now()};
+  }else{
+    novo = {usuario:userAtual, id:Date.now(), desc:desc.value, valor:+valor.value, custo:+custo.value, ordinario:+ordinario.value, data:Date.now()};
+  }
 
-function deletePedido(id){
- if(confirm("Deseja excluir este pedido?")){
-  pedidos=pedidos.filter(p=>p.id!==id);
+  pedidos.push(novo);
   render();
-  sheetsSave();
- }
+
+  // envia para Sheets
+  await fetch(SHEETS_URL,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({...novo, env})
+  });
 }
 
-function editPedido(id){
- const p=pedidos.find(p=>p.id===id);
- p.desc=prompt("Descrição:",p.desc) || p.desc;
- p.valor=+prompt("Valor:",p.valor) || p.valor;
- if(env!=="Modelle"){
-  p.custo=+prompt("Custo:",p.custo) || p.custo;
-  p.ordinario=+prompt("Ordinários:",p.ordinario) || p.ordinario;
- }
- render();
- sheetsSave();
+async function deletePedido(id){
+  if(confirm("Deseja excluir este pedido?")){
+    const p = pedidos.find(p=>p.id===id);
+    pedidos = pedidos.filter(p=>p.id!==id);
+    render();
+    // Reenvia toda lista para Sheets (pode ser ajustado para deletar individual se preferir)
+    for(const ped of pedidos){
+      await fetch(SHEETS_URL,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({...ped, env})
+      });
+    }
+  }
+}
+
+async function editPedido(id){
+  const p = pedidos.find(p=>p.id===id);
+  p.desc=prompt("Descrição:",p.desc) || p.desc;
+  p.valor=+prompt("Valor:",p.valor) || p.valor;
+  if(env!=="Modelle"){
+    p.custo=+prompt("Custo:",p.custo) || p.custo;
+    p.ordinario=+prompt("Operacionais:",p.ordinario) || p.ordinario;
+  }
+  render();
+  // envia alteração para Sheets
+  await fetch(SHEETS_URL,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({...p, env})
+  });
 }
 
 /* ===== RENDER ===== */
