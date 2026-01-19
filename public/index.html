@@ -8,14 +8,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
 <style>
-/* ===== SEU CSS ORIGINAL (INTACTO) ===== */
 :root{
   --bg:#0a192f;
   --card:#112240;
   --accent:#64ffda;
   --text:#e6f1ff;
 }
+
 *{box-sizing:border-box}
+
 body{
   margin:0;
   font-family:'Poppins',sans-serif;
@@ -23,24 +24,28 @@ body{
   color:var(--text);
   transition:.4s;
 }
+
 button,input{
   padding:10px;
   border:none;
   border-radius:10px;
   font-family:'Poppins';
 }
+
 button{
   cursor:pointer;
   font-weight:600;
   transition:.3s;
 }
 button:hover{transform:scale(1.05)}
+
 .center{
   min-height:100vh;
   display:flex;
   align-items:center;
   justify-content:center;
 }
+
 .box{
   background:var(--card);
   padding:35px;
@@ -50,23 +55,28 @@ button:hover{transform:scale(1.05)}
   box-shadow:0 25px 60px rgba(0,0,0,.45);
   animation:fade .5s;
 }
+
 @keyframes fade{
  from{opacity:0;transform:translateY(20px)}
  to{opacity:1}
 }
+
 .hidden{display:none}
+
 header{
   display:flex;
   justify-content:space-between;
   align-items:center;
   margin-bottom:25px;
 }
+
 .metrics{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
   gap:20px;
   margin-bottom:25px;
 }
+
 .metric{
   background:var(--card);
   padding:20px;
@@ -76,13 +86,16 @@ header{
   transition:.3s;
 }
 .metric:hover{transform:translateY(-6px)}
+
 .metric strong{font-size:22px}
+
 .form{
   background:var(--card);
   padding:20px;
   border-radius:20px;
   margin-bottom:25px;
 }
+
 .lead{
   background:#fff;
   color:#000;
@@ -93,7 +106,9 @@ header{
   transition:.3s;
 }
 .lead:hover{transform:translateY(-5px)}
+
 .lead small{opacity:.6}
+
 .lead button{
   margin-top:10px;
   margin-right:5px;
@@ -101,8 +116,13 @@ header{
   padding:6px 12px;
   border-radius:8px;
 }
-.btn-edit{background:#fde68a;}
-.btn-delete{background:#fecaca;}
+
+.btn-edit{
+  background:#fde68a;
+}
+.btn-delete{
+  background:#fecaca;
+}
 </style>
 </head>
 
@@ -143,10 +163,6 @@ header{
 </div>
 
 <script>
-/* ===== CONFIG GOOGLE SHEETS ===== */
-const SHEETS_API = "https://script.google.com/macros/s/AKfycbzcVPg6Blji9GOWv9-0E4UT5JDghVl_CmYxxiqdX6SbP6lhxgAtuf3veByu3d-hDFsj/exec";
-
-/* ===== USUÁRIOS ===== */
 const users={
  Lohan:{pass:"D9f0da85",env:["Modelle","Cia","Thalles"]},
  Marcus:{pass:"Elistray6001",env:["Cia"]},
@@ -156,13 +172,13 @@ const users={
 
 let env=null,userAtual=null,pedidos=[];
 
-/* ===== TEMAS ===== */
 function themeModelle(){
  document.documentElement.style.setProperty("--bg","#f6e2cf");
  document.documentElement.style.setProperty("--card","#e7c09b");
  document.documentElement.style.setProperty("--accent","#c58c5e");
  document.documentElement.style.setProperty("--text","#000");
 }
+
 function themeThalles(){
  document.documentElement.style.setProperty("--bg","#0b1220");
  document.documentElement.style.setProperty("--card","#0f172a");
@@ -170,8 +186,23 @@ function themeThalles(){
  document.documentElement.style.setProperty("--text","#e0f2fe");
 }
 
-/* ===== LOGIN ===== */
-async function login(){
+function selectEnv(e){
+ env=e;
+ envSelect.classList.add("hidden");
+ loginScreen.classList.remove("hidden");
+
+ envTitle.innerText =
+  e==="Modelle" ? "👩‍🦰 Modelle Skin" :
+  e==="Cia" ? "📒 Cia & Arte" :
+  "🌬️ Thalles Climatização";
+}
+
+function backToEnv(){
+ loginScreen.classList.add("hidden");
+ envSelect.classList.remove("hidden");
+}
+
+function login(){
  if(users[user.value] && users[user.value].pass===pass.value && users[user.value].env.includes(env)){
   userAtual=user.value;
   loginScreen.classList.add("hidden");
@@ -185,54 +216,51 @@ async function login(){
   if(env==="Modelle") themeModelle();
   if(env==="Thalles") themeThalles();
 
-  try{
-    await loadPedidos();
-  }catch(e){
-    console.warn("Sheets não respondeu ainda", e);
-    pedidos=[];
-  }
-
+  pedidos=JSON.parse(localStorage.getItem(env+"_"+userAtual))||[];
   render();
- }else{
-  loginError.innerText="Login inválido";
- }
+ }else loginError.innerText="Login inválido";
 }
 
-/* ===== GOOGLE SHEETS ===== */
-async function loadPedidos(){
- const res = await fetch(`${SHEETS_API}?env=${env}`);
- pedidos = await res.json();
+function logout(){location.reload()}
+
+function save(){
+ localStorage.setItem(env+"_"+userAtual,JSON.stringify(pedidos));
 }
 
-async function savePedido(p){
- await fetch(SHEETS_API,{
-  method:"POST",
-  body:JSON.stringify({env,...p})
- });
-}
-
-/* ===== CRUD ===== */
-async function addPedido(){
- let p;
+function addPedido(){
  if(env==="Modelle"){
-  p={id:Date.now(),desc:desc.value,valor:+valor.value,data:Date.now()};
+  pedidos.push({id:Date.now(),desc:desc.value,valor:+valor.value,data:Date.now()});
  }else{
-  p={id:Date.now(),desc:desc.value,valor:+valor.value,custo:+custo.value,ordinario:+ordinario.value,data:Date.now()};
+  pedidos.push({
+   id:Date.now(),
+   desc:desc.value,
+   valor:+valor.value,
+   custo:+custo.value,
+   ordinario:+ordinario.value,
+   data:Date.now()
+  });
  }
- pedidos.push(p);
- await savePedido(p);
- render();
+ save();render();
 }
 
-async function deletePedido(id){
+function deletePedido(id){
  if(confirm("Deseja excluir este pedido?")){
-  await fetch(`${SHEETS_API}?env=${env}&delete=${id}`);
   pedidos=pedidos.filter(p=>p.id!==id);
-  render();
+  save();render();
  }
 }
 
-/* ===== RENDER (INTACTO) ===== */
+function editPedido(id){
+ const p=pedidos.find(p=>p.id===id);
+ p.desc=prompt("Descrição:",p.desc) || p.desc;
+ p.valor=+prompt("Valor:",p.valor) || p.valor;
+ if(env!=="Modelle"){
+  p.custo=+prompt("Custo:",p.custo) || p.custo;
+  p.ordinario=+prompt("Ordinários:",p.ordinario) || p.ordinario;
+ }
+ save();render();
+}
+
 function render(){
  let total=0,custos=0;
  pedidos.forEach(p=>{
@@ -274,4 +302,32 @@ function render(){
     💰 Valor: R$ ${p.valor}<br>
     ${env!=="Modelle"?`📉 Custos: R$ ${(p.custo+p.ordinario)}<br>📈 Lucro: R$ ${(p.valor-(p.custo+p.ordinario))}<br>`:""}
     <small>📅 ${new Date(p.data).toLocaleDateString()}</small><br>
-    <button class="btn-delete" onclick="delet
+    <button class="btn-edit" onclick="editPedido(${p.id})">✏️ Editar</button>
+    <button class="btn-delete" onclick="deletePedido(${p.id})">🗑️ Excluir</button>
+   </div>
+  `;
+ });
+}
+
+function exportCSV(){
+ let csv="Descrição,Valor,Data\n";
+ if(env!=="Modelle") csv="Descrição,Valor,Custo,Ordinários,Lucro,Data\n";
+
+ pedidos.forEach(p=>{
+  if(env==="Modelle"){
+   csv+=`${p.desc},${p.valor},${new Date(p.data).toLocaleDateString()}\n`;
+  }else{
+   csv+=`${p.desc},${p.valor},${p.custo},${p.ordinario},${p.valor-(p.custo+p.ordinario)},${new Date(p.data).toLocaleDateString()}\n`;
+  }
+ });
+
+ const blob=new Blob([csv],{type:"text/csv"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download=env+"_consolidado.csv";
+ a.click();
+}
+</script>
+
+</body>
+</html>
