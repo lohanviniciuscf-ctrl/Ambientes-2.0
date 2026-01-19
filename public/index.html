@@ -123,6 +123,11 @@ header{
 .btn-delete{
   background:#fecaca;
 }
+
+#sendAppSheet{
+  margin-top:15px;
+  background:#4ade80;
+}
 </style>
 </head>
 
@@ -159,11 +164,13 @@ header{
 
 <div id="metrics" class="metrics"></div>
 <div class="form" id="formArea"></div>
+<div>
+  <button id="sendAppSheet" onclick="enviarAppSheet()">💾 Enviar para AppSheet</button>
+</div>
 <div id="lista"></div>
 </div>
 
 <script>
-/* ===== USUÁRIOS ===== */
 const users={
  Lohan:{pass:"D9f0da85",env:["Modelle","Cia","Thalles"]},
  Marcus:{pass:"Elistray6001",env:["Cia"]},
@@ -173,13 +180,13 @@ const users={
 
 let env=null,userAtual=null,pedidos=[];
 
-/* ===== TEMAS ===== */
 function themeModelle(){
  document.documentElement.style.setProperty("--bg","#f6e2cf");
  document.documentElement.style.setProperty("--card","#e7c09b");
  document.documentElement.style.setProperty("--accent","#c58c5e");
  document.documentElement.style.setProperty("--text","#000");
 }
+
 function themeThalles(){
  document.documentElement.style.setProperty("--bg","#0b1220");
  document.documentElement.style.setProperty("--card","#0f172a");
@@ -187,7 +194,6 @@ function themeThalles(){
  document.documentElement.style.setProperty("--text","#e0f2fe");
 }
 
-/* ===== SELEÇÃO DE AMBIENTE ===== */
 function selectEnv(e){
  env=e;
  envSelect.classList.add("hidden");
@@ -198,25 +204,13 @@ function selectEnv(e){
   e==="Cia" ? "📒 Cia & Arte" :
   "🌬️ Thalles Climatização";
 }
+
 function backToEnv(){
  loginScreen.classList.add("hidden");
  envSelect.classList.remove("hidden");
 }
 
-/* ===== GOOGLE SHEETS CONFIG ===== */
-const SHEETS_URL="https://script.google.com/macros/s/AKfycbyJNbnurDsYbQeomdqZ-kUa5iLcWOJ8MykBdub3SFlqGHuZ4M0wx8XTdSznaqipZ8KX/exec";
-
-async function sheetsLoad(){
-  try{
-    const r = await fetch(`${SHEETS_URL}?env=${env}`);
-    const data = await r.json();
-    if(userAtual === "Lohan") pedidos = data;
-    else pedidos = data.filter(p=>p.usuario === userAtual);
-  }catch(e){console.error("Erro ao carregar dados do Sheets",e);}
-}
-
-/* ===== LOGIN ===== */
-async function login(){
+function login(){
  if(users[user.value] && users[user.value].pass===pass.value && users[user.value].env.includes(env)){
   userAtual=user.value;
   loginScreen.classList.add("hidden");
@@ -230,80 +224,51 @@ async function login(){
   if(env==="Modelle") themeModelle();
   if(env==="Thalles") themeThalles();
 
-  await sheetsLoad();
+  pedidos=JSON.parse(localStorage.getItem(env+"_"+userAtual))||[];
   render();
  }else loginError.innerText="Login inválido";
 }
 
 function logout(){location.reload()}
 
-/* ===== PEDIDOS ===== */
-async function addPedido(){
-  let novo;
-  if(env==="Modelle"){
-    novo = {usuario:userAtual, desc:desc.value, valor:+valor.value, data:Date.now()};
-  }else{
-    novo = {usuario:userAtual, desc:desc.value, valor:+valor.value, custo:+custo.value, ordinario:+ordinario.value, data:Date.now()};
-  }
-
-  pedidos.push(novo);
-  render();
-
-  // ✅ Envia ao Sheets corretamente com try/catch
-  try {
-    const res = await fetch(SHEETS_URL,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({...novo, env})
-    });
-    const text = await res.text();
-    console.log("Enviado ao Sheets:", text);
-  } catch(e) {
-    console.error("Erro ao enviar para Sheets:", e);
-  }
+function save(){
+ localStorage.setItem(env+"_"+userAtual,JSON.stringify(pedidos));
 }
 
-async function deletePedido(id){
-  if(confirm("Deseja excluir este pedido?")){
-    pedidos = pedidos.filter(p=>p.id!==id);
-    render();
-
-    try {
-      for(const p of pedidos){
-        await fetch(SHEETS_URL,{
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({...p, env})
-        });
-      }
-    } catch(e) {
-      console.error("Erro ao sincronizar exclusão:", e);
-    }
-  }
+function addPedido(){
+ if(env==="Modelle"){
+  pedidos.push({id:Date.now(),desc:desc.value,valor:+valor.value,data:Date.now()});
+ }else{
+  pedidos.push({
+   id:Date.now(),
+   desc:desc.value,
+   valor:+valor.value,
+   custo:+custo.value,
+   ordinario:+ordinario.value,
+   data:Date.now()
+  });
+ }
+ save();render();
 }
 
-async function editPedido(id){
-  const p = pedidos.find(p=>p.id===id);
-  p.desc=prompt("Descrição:",p.desc) || p.desc;
-  p.valor=+prompt("Valor:",p.valor) || p.valor;
-  if(env!=="Modelle"){
-    p.custo=+prompt("Custo:",p.custo) || p.custo;
-    p.ordinario=+prompt("Operacionais:",p.ordinario) || p.ordinario;
-  }
-  render();
-
-  try {
-    await fetch(SHEETS_URL,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({...p, env})
-    });
-  } catch(e) {
-    console.error("Erro ao atualizar pedido:", e);
-  }
+function deletePedido(id){
+ if(confirm("Deseja excluir este pedido?")){
+  pedidos=pedidos.filter(p=>p.id!==id);
+  save();render();
+ }
 }
 
-/* ===== RENDER ===== */
+function editPedido(id){
+ const p=pedidos.find(p=>p.id===id);
+ p.desc=prompt("Descrição:",p.desc) || p.desc;
+ p.valor=+prompt("Valor:",p.valor) || p.valor;
+ if(env!=="Modelle"){
+  p.custo=+prompt("Custo:",p.custo) || p.custo;
+  p.ordinario=+prompt("Operacionais:",p.ordinario) || p.ordinario;
+ }
+ save();render();
+}
+
 function render(){
  let total=0,custos=0;
  pedidos.forEach(p=>{
@@ -318,7 +283,7 @@ function render(){
   <div class="metric">Pedidos<br><strong>${pedidos.length}</strong></div>
   <div class="metric">Total<br><strong>R$ ${total.toFixed(2)}</strong></div>
   <div class="metric">Comissão 1%<br><strong>R$ ${comissao.toFixed(2)}</strong></div>
- `:` 
+ `:`
   <div class="metric">Pedidos<br><strong>${pedidos.length}</strong></div>
   <div class="metric">Faturamento<br><strong>R$ ${total.toFixed(2)}</strong></div>
   <div class="metric">Custos<br><strong>R$ ${custos.toFixed(2)}</strong></div>
@@ -336,7 +301,7 @@ function render(){
   <input id="ordinario" type="number" placeholder="Custos operacionais"><br><br>
   <button onclick="addPedido()">Adicionar</button>
  `;
-
+ 
  lista.innerHTML="";
  pedidos.forEach(p=>{
   lista.innerHTML+=`
@@ -352,7 +317,6 @@ function render(){
  });
 }
 
-/* ===== EXPORT CSV ===== */
 function exportCSV(){
  let csv="Descrição,Valor,Data\n";
  if(env!=="Modelle") csv="Descrição,Valor,Custo,Ordinários,Lucro,Data\n";
@@ -370,6 +334,29 @@ function exportCSV(){
  a.href=URL.createObjectURL(blob);
  a.download=env+"_consolidado.csv";
  a.click();
+}
+
+/* ===== ENVIO PARA APPSHEET ===== */
+async function enviarAppSheet(){
+  // Substitua pela URL da sua API do AppSheet
+  const URL_APPSHEET = "COLE_AQUI_SUA_URL_DO_APPSHEET";
+  try{
+    const res = await fetch(URL_APPSHEET,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        usuario: userAtual,
+        ambiente: env,
+        pedidos: pedidos
+      })
+    });
+    const data = await res.json();
+    alert("Pedidos enviados ao AppSheet com sucesso!");
+    console.log("AppSheet Response:", data);
+  }catch(e){
+    console.error("Erro ao enviar para AppSheet:",e);
+    alert("Falha ao enviar para AppSheet");
+  }
 }
 </script>
 
