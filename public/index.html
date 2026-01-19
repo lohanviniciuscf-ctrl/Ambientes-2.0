@@ -241,14 +241,15 @@ function logout(){location.reload()}
 async function addPedido(){
   let novo;
   if(env==="Modelle"){
-    novo = {usuario:userAtual, id:Date.now(), desc:desc.value, valor:+valor.value, data:Date.now()};
+    novo = {usuario:userAtual, desc:desc.value, valor:+valor.value, data:Date.now()};
   }else{
-    novo = {usuario:userAtual, id:Date.now(), desc:desc.value, valor:+valor.value, custo:+custo.value, ordinario:+ordinario.value, data:Date.now()};
+    novo = {usuario:userAtual, desc:desc.value, valor:+valor.value, custo:+custo.value, ordinario:+ordinario.value, data:Date.now()};
   }
 
   pedidos.push(novo);
   render();
 
+  // Envia ao Sheets corretamente
   await fetch(SHEETS_URL,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
@@ -258,14 +259,15 @@ async function addPedido(){
 
 async function deletePedido(id){
   if(confirm("Deseja excluir este pedido?")){
-    const p = pedidos.find(p=>p.id===id);
     pedidos = pedidos.filter(p=>p.id!==id);
     render();
-    for(const ped of pedidos){
+
+    // Reenvia todos pedidos ao Sheets (para manter sincronização)
+    for(const p of pedidos){
       await fetch(SHEETS_URL,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({...ped, env})
+        body:JSON.stringify({...p, env})
       });
     }
   }
