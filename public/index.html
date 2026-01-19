@@ -204,7 +204,7 @@ function backToEnv(){
 }
 
 /* ===== GOOGLE SHEETS CONFIG ===== */
-const SHEETS_URL="https://script.google.com/macros/s/AKfycbz6czqWYtU6TBRoy3lgrGsjnqttSVfKvps4yXjJfqXPek8256PaUc2t_NBwmRuUo2ChWw/exec";
+const SHEETS_URL="https://script.google.com/macros/s/AKfycbyJNbnurDsYbQeomdqZ-kUa5iLcWOJ8MykBdub3SFlqGHuZ4M0wx8XTdSznaqipZ8KX/exec";
 
 async function sheetsLoad(){
   try{
@@ -249,12 +249,18 @@ async function addPedido(){
   pedidos.push(novo);
   render();
 
-  // Envia ao Sheets corretamente
-  await fetch(SHEETS_URL,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({...novo, env})
-  });
+  // ✅ Envia ao Sheets corretamente com try/catch
+  try {
+    const res = await fetch(SHEETS_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({...novo, env})
+    });
+    const text = await res.text();
+    console.log("Enviado ao Sheets:", text);
+  } catch(e) {
+    console.error("Erro ao enviar para Sheets:", e);
+  }
 }
 
 async function deletePedido(id){
@@ -262,13 +268,16 @@ async function deletePedido(id){
     pedidos = pedidos.filter(p=>p.id!==id);
     render();
 
-    // Reenvia todos pedidos ao Sheets (para manter sincronização)
-    for(const p of pedidos){
-      await fetch(SHEETS_URL,{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({...p, env})
-      });
+    try {
+      for(const p of pedidos){
+        await fetch(SHEETS_URL,{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({...p, env})
+        });
+      }
+    } catch(e) {
+      console.error("Erro ao sincronizar exclusão:", e);
     }
   }
 }
@@ -282,11 +291,16 @@ async function editPedido(id){
     p.ordinario=+prompt("Operacionais:",p.ordinario) || p.ordinario;
   }
   render();
-  await fetch(SHEETS_URL,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({...p, env})
-  });
+
+  try {
+    await fetch(SHEETS_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({...p, env})
+    });
+  } catch(e) {
+    console.error("Erro ao atualizar pedido:", e);
+  }
 }
 
 /* ===== RENDER ===== */
