@@ -128,17 +128,15 @@ header{
 
 <body>
 
-<!-- Seleção de ambiente -->
 <div id="envSelect" class="center">
   <div class="box">
     <h2>🌐 Escolha o ambiente</h2><br>
-    <button style="background:#e7c09b" data-env="Modelle">👩‍🦰 Modelle Skin</button><br><br>
-    <button style="background:#64ffda" data-env="Cia">📒 Cia & Arte</button><br><br>
-    <button style="background:#7dd3fc" data-env="Thalles">🌬️ Thalles Climatização</button>
+    <button style="background:#e7c09b" onclick="selectEnv('Modelle')">👩‍🦰 Modelle Skin</button><br><br>
+    <button style="background:#64ffda" onclick="selectEnv('Cia')">📒 Cia & Arte</button><br><br>
+    <button style="background:#7dd3fc" onclick="selectEnv('Thalles')">🌬️ Thalles Climatização</button>
   </div>
 </div>
 
-<!-- Tela de login -->
 <div id="loginScreen" class="center hidden">
   <div class="box">
     <button onclick="backToEnv()">⬅ Voltar</button>
@@ -146,11 +144,10 @@ header{
     <input id="user" placeholder="Usuário"><br><br>
     <input id="pass" type="password" placeholder="Senha"><br><br>
     <button onclick="login()">Entrar</button>
-    <div id="loginError" style="color:#f87171;margin-top:10px;"></div>
+    <div id="loginError"></div>
   </div>
 </div>
 
-<!-- App principal -->
 <div id="app" class="hidden" style="padding:30px">
 <header>
   <h2 id="appTitle"></h2>
@@ -166,7 +163,6 @@ header{
 </div>
 
 <script>
-/* ===== USUÁRIOS ===== */
 const users={
  Lohan:{pass:"D9f0da85",env:["Modelle","Cia","Thalles"]},
  Marcus:{pass:"Elistray6001",env:["Cia"]},
@@ -176,27 +172,19 @@ const users={
 
 let env=null,userAtual=null,pedidos=[];
 
-/* ===== TEMAS ===== */
 function themeModelle(){
  document.documentElement.style.setProperty("--bg","#f6e2cf");
  document.documentElement.style.setProperty("--card","#e7c09b");
  document.documentElement.style.setProperty("--accent","#c58c5e");
  document.documentElement.style.setProperty("--text","#000");
 }
+
 function themeThalles(){
  document.documentElement.style.setProperty("--bg","#0b1220");
  document.documentElement.style.setProperty("--card","#0f172a");
  document.documentElement.style.setProperty("--accent","#38bdf8");
  document.documentElement.style.setProperty("--text","#e0f2fe");
 }
-
-/* ===== SELEÇÃO DE AMBIENTE ===== */
-const envButtons = document.querySelectorAll("#envSelect button[data-env]");
-envButtons.forEach(btn => {
-  btn.addEventListener("click", ()=> {
-    selectEnv(btn.dataset.env);
-  });
-});
 
 function selectEnv(e){
  env=e;
@@ -208,12 +196,12 @@ function selectEnv(e){
   e==="Cia" ? "📒 Cia & Arte" :
   "🌬️ Thalles Climatização";
 }
+
 function backToEnv(){
  loginScreen.classList.add("hidden");
  envSelect.classList.remove("hidden");
 }
 
-/* ===== LOGIN ===== */
 function login(){
  if(users[user.value] && users[user.value].pass===pass.value && users[user.value].env.includes(env)){
   userAtual=user.value;
@@ -228,13 +216,17 @@ function login(){
   if(env==="Modelle") themeModelle();
   if(env==="Thalles") themeThalles();
 
-  pedidos=[]; // Começa vazio
+  pedidos=JSON.parse(localStorage.getItem(env+"_"+userAtual))||[];
   render();
  }else loginError.innerText="Login inválido";
 }
+
 function logout(){location.reload()}
 
-/* ===== PEDIDOS ===== */
+function save(){
+ localStorage.setItem(env+"_"+userAtual,JSON.stringify(pedidos));
+}
+
 function addPedido(){
  if(env==="Modelle"){
   pedidos.push({id:Date.now(),desc:desc.value,valor:+valor.value,data:Date.now()});
@@ -248,13 +240,13 @@ function addPedido(){
    data:Date.now()
   });
  }
- render();
+ save();render();
 }
 
 function deletePedido(id){
  if(confirm("Deseja excluir este pedido?")){
   pedidos=pedidos.filter(p=>p.id!==id);
-  render();
+  save();render();
  }
 }
 
@@ -266,10 +258,9 @@ function editPedido(id){
   p.custo=+prompt("Custo:",p.custo) || p.custo;
   p.ordinario=+prompt("Ordinários:",p.ordinario) || p.ordinario;
  }
- render();
+ save();render();
 }
 
-/* ===== RENDER ===== */
 function render(){
  let total=0,custos=0;
  pedidos.forEach(p=>{
@@ -318,7 +309,6 @@ function render(){
  });
 }
 
-/* ===== EXPORT CSV ===== */
 function exportCSV(){
  let csv="Descrição,Valor,Data\n";
  if(env!=="Modelle") csv="Descrição,Valor,Custo,Ordinários,Lucro,Data\n";
